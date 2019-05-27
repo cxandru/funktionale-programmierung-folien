@@ -1,0 +1,200 @@
+\documentclass{beamer}
+\usetheme{Luebeck}
+\usecolortheme{whale}
+\usepackage[ngerman]{babel}
+\usepackage{csquotes}
+\usepackage{pgf-umlsd}
+\usepackage{fancyvrb}
+\usepackage{forest}
+\title{Definiertheit rekursiver Funktionen}
+\author{Gregor Alexandru}
+\DefineVerbatimEnvironment{Verbatim}{Verbatim}{fontsize=\small}
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>{Gliederung}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+\AtBeginSubsection[]
+{
+  \begin{frame}<beamer>{Gliederung}
+    \tableofcontents[currentsection,currentsubsection]
+  \end{frame}
+}
+
+\begin{document}
+
+\begin{frame}
+ \titlepage
+\end{frame}
+
+\section{Motivation}
+
+\begin{frame}[fragile]
+  \frametitle{Definiertheit}
+  Achtung: der Begriff \enquote{Definiertheit} ist nicht zu verwechseln mit dem Beweisschritt \textsc{Definiertheit} im Beweis der Definiertheit einer rekursiven Funktion.
+  \begin{itemize}
+  \item Was meinen wir mit dem Begriff \enquote{Definiertheit}?
+  \item Die Auswertung eines Ausdrucks soll \emph{terminieren} und ein Ergebniss liefern
+  \item Beispiele nicht-definierter Ausdrücke:
+    \begin{itemize}
+    \item \texttt{head []} -- bei der Auswertung wird eine Ausnahme (Exception) geworfen
+    \item \texttt{1 `div` 0} -- wie oben
+    \item Gegeben:
+\begin{Verbatim}
+f x = f x
+\end{Verbatim}
+      \texttt{f 1} -- der Funktionsaufruf terminiert nicht.
+%    \item \texttt{(\x -> x x) (\x-> x x))} --terminiert nicht
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{Partielle Funktionen}
+  \begin{itemize}
+  \item In den ersten zwei Beispielen der letzten Folie waren nicht-definierte Ausdrücke die Ergebnisse der Anwendung von Funktionen auf bestimmte problematische Werte.
+  \item Wenn Funktionen für bestimmte Werte aus ihrem Ursprung nicht definiert sind, nennen wir sie \emph{partiell}.
+  \item Die Funktion \texttt{head} z.B. ist \emph{nicht} definiert für \texttt{[]}.
+  \item Die Teilmenge der Werte des angegebenen Ursprungs einer Funktion \(f\), für die diese \emph{definiert} ist, nennen wir ihren \emph{Definitionsbereich} und schreiben sie \(dom(f)\).
+    \begin{itemize}
+    \item Beispiel für die Funktion \texttt{head}: Ursprung ist \texttt{[a]}, Definitionsbereich ist \(dom(\mathtt{head})=\{x\mathtt{::[a]}|x\neq\mathtt{[]}\}\)
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+\begin{frame}[fragile]
+  \frametitle{Rekursive Funktionen}
+  \begin{itemize}
+  \item Rekursive Funktionen bieten eine besondere Schwierigkeit bei der Bestimmung ihres Definitionsbereichs, da die Argumentation erstmal zyklisch erscheint. 
+  \item Beispiel von vorhin:
+\begin{Verbatim}
+f x = f x
+\end{Verbatim}
+    Der Ausdruck (1)=\texttt{f a}, \texttt{a} beliebig, ist definiert genau dann, wenn seine Auswertung terminiert, also der Ausdruck zu dem er auswertet, also (2)=\texttt{f a}, definiert ist, also seine Auswertung terminiert, also der Ausdruck zu dem er auswertet, also (3)=\texttt{f a}, wohdefiniert ist,...
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{\textsc{Definiertheit I}}
+  \begin{itemize}
+  \item Wir können uns erstmal abhelfen indem wir fordern dass, angenommen dass die rekursiven Aufrufe von \(f\) im Rumpf definiert sind, der Aufruf selbst auch definiert ist.
+  \item Konkret heisst das dass mögliche partielle Funktionen die im Rumpf aufgerufen werden nur mit solchen Werten aufgerufen werden, für die sie definiert sind.
+  \item Damit schließen wir Funktionen wie \texttt{f x = f x `div` 0} von Vornherein schon aus.
+  \item Wir betrachten die Werte der rekursiven Aufrufe also als black box und schauen ob der Ausdruck dann definiert ist\footnote{Über die \emph{Werte} der Aufrufe wissen wir ausser ihrer Definiertheit i.A. nichts, dafür müssten wir den Bildbereich der Funktion \(dom(f)\) finden oder Aussagen über die funktionale Abhängigkeit der Funktionswerte von ihrer Eingabe treffen, was den Ramen dieser Beobachtung sprengt.}.
+  \item \alt<2>{\texttt{f x = 1 `div` x - (blablii) + head [blub]}}{\texttt{f x = 1 `div` x - (f (x+1)) + head [f (x-2)]}}
+  \end{itemize}
+\end{frame}
+\begin{frame}[fragile]
+  \frametitle{Partielle Terminierung}
+  \begin{itemize}
+  \item Wir hatten gesehen, dass Funktionen partiell definiert sein können, also nur für bestimmte Werte des Ursprungs definiert sind. Insb. kann sich das so äußern, dass Ihre Auswertung nur für bestimmte Werte terminiert.
+  \item Beispiel: die partielle Fakultätsfunktion:
+\begin{Verbatim}
+fak 0 = 1
+fax x = x * fak (x-1)
+\end{Verbatim}
+  \item terminiert nur für \(x\in \mathbb{N}\subseteq \mathbb{Z}\)
+  \item Wir wollen also ggf. nur die partielle Definiertheit (und damit insb. Terminierung) einer Funktion zeigen, also dass \texttt{f x} definiert ist für Werte \(x\in A'\), wobei \(A'\) Teilmenge des Ursprungs ist.
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \begin{itemize}
+  \item Wollen wir zeigen, dass \texttt{f x} definiert ist, müssen wir erst seine \textsc{Definiertheit} zeigen.
+  \item Dafür mussten wir zeigen dass der Rumpf von \texttt{f x} definiert ist, unter der Vorraussetzung, dass alle rekursiven Aufrufe im Rumpf definiert sind.
+  \item Unser Ziel ist jetzt aber nur, für Werte  \(x\in A'\) die Definiertheit von \texttt{f x} zu zeigen!
+\item D.h. wir dürfen die Definiertheit der rekursiven Aufrufe nur dann annehmen, wenn diese wieder mit Parametern \(y\in A'\) getätigt werden!
+\item Diese Beobachtung führt uns zur Formulierung der nächsten Eigenschaft, und danach der Umformulierung der \textsc{Definiertheit}.
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{\textsc{Abgeschlossenheit, Definiertheit}}
+  \textsc{Abgeschlossenheit}
+  \begin{itemize}
+  \item Sei \(f:A\to B\), \(A'\subseteq A\). Wollen wir zeigen, dass für alle \(x\in A'\) \texttt{f x} definiert ist, darf \texttt{f x} im Rumpf keine rekursiven Aufrufe mit Parametern \(y\notin A'\) tätigen.
+  \end{itemize}
+  \textsc{Definiertheit}
+  \begin{itemize}
+  \item Sei \(f:A\to B\), \(A'\subseteq A\). Wollen wir zeigen, dass für alle \(x\in A'\) \texttt{f x} definiert ist, unter der Annahme dass alle rekursiven Aufrufe die getätigt werden es sind, muss der Rumpf an sich definiert sein.
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{Terminierung}
+
+  
+  
+  \begin{itemize}
+  \item Wir haben nun alle Vorkehrungen getroffen um sicher zu sein dass die Weiterverarbeitung der Ergebnisse rekursiver Aufrufe definiert sein wird. Was wir noch nicht wissen ist aber ob wir diese Ergebnisse je erhalten werden, d.h. ob die rekursiven Aufrufe irgendwann etwas zurückliefern.
+  \item Das Problem liegt an dem Aufrufverhalten rekursiver Funktionen. Sie sollten Basisfälle haben, wir wissen aber nicht ob die unbedingt erreicht werden.
+  \item Die längste Kette rekursiver Aufrufe bis zu einem Basisfall nennen wir die \emph{Rekursionstiefe} eines Aufrufs
+  \item Es folgen Beispiele mit den Aufrufbäumen der baumrekursiven \textit{Fibonnaci}-Funktion und der linearrekursiven Fakultätsfunktion.
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{Beispiele Rekursionstiefe}
+  \begin{minipage}[t]{.3\linewidth}
+  \begin{figure}
+    \begin{forest}
+      [fak(3)[fak(2)[fak(1)[fak(0)]]]]
+    \end{forest}
+    \caption{depth(fak(3))=3}
+    \label{fig:fak}
+  \end{figure}
+\end{minipage}
+\begin{minipage}[t]{.3\linewidth}
+  \begin{figure}
+    \begin{forest}
+      [fib(4)[fib(3)[fib(2)[fib(1)][fib(0)]][fib(1)]][fib(2)[fib(1)][fib(0)]]]
+    \end{forest}    
+    \caption{depth(fib(4))=
+      1+max(depth(fib(3),fib(2)))=...=
+      1+max(2,1)=3}
+    \label{fig:fib}
+  \end{figure}
+\end{minipage}
+\end{frame}
+\begin{frame}
+  \frametitle{Endliche Rekursionstiefe $\Leftrightarrow$ Terminierung}
+  \begin{itemize}
+  \item Wenn eine rekursive Funktion terminiert hat sie eine endliche Rekursionstiefe und umgekehrt.
+  \item Ein Ansatz um herauszufinden ob eine rekursive Funktion \(f\) aufgerufen mit Parameter \(x\) terminiert wäre also eine Funktion die uns in Abhängigkeit von eben diesem \(x\) die Rekursionstiefe von \texttt{f x} angibt, oder wenigstens eine obere Schranke dafür.
+  \item Diese Funktion wollen wir jetzt formalisieren.
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{\textsc{Abstiegsfunktion I}}
+  \begin{itemize}
+  \item Sei \(f:A\to B \) eine rekursive Funktion, die auf der Teilmenge \(A'\subseteq A\) terminieren soll. 
+  \item \(f\) terminiert genau dann für alle Werte aus \(A'\), wenn es eine Funktion \(m:A'\to \mathbb{N}\) gibt\footnote{Die Funktion kann auch Ursprung \(A\) haben, muss aber nur für \(x\in A'\) definiert sein}, die für jedes \(x\in A'\) eine obere Schranke für die Rekursionstiefe depth(f(x)) zurückgibt.
+  \item Wie können wir aber überprüfen, dass \(m\) seine Spezifikation erfüllt?
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{Test auf Abstieg}
+  \begin{itemize}
+  \item  Ein möglicher Test ist folgende Beobachtung: Wenn \(m(x) = n\) sollte \(m(y) < n\) bzw \(m(y) \leq n-1\) für alle rekursiven Aufrufe \texttt{f y} die bei der Auswertung von \texttt{f x} getätigt werden.
+  \item Denn: Bei einem getätigten Schritt in die Rekursionstiefe sollte die Abschätzung für die verbleibende Tiefe mindestens um 1 verringert werden.
+  \item Wäre die Abschätzung bei einem rekursiven Aufruf größer oder gleich, so wäre die ursprüngliche Abschätzung falsch gewesen.
+  \item Veranschaulichung: Keine Abstiegsfunktion ist z.B. die Anzeige der Restwartezeit auf öffentliche Verkehrsmittel: Wenn nach einer Minute die Wartezeit immer noch 20 Minuten beträgt oder gar 21, kann die Anzeige von 20 Minuten vor einer Minute nicht gestimmt haben.
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \begin{itemize}
+  \item Wir haben also einen geeigneten Test auf Abstieg gefunden. Damit formalisieren wir die \textsc{Abstiegsfunktion} neu.
+  \item Um das Bild abzurunden schreiben wir diese neue Formalisierung zusammen mit denen der \textsc{Definiertheit} und \textsc{Abgeschlossenheit} auf.
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{Definiertheit rekursiver Funktionen}
+  Sei \(f:A\to B\), \(A'\subseteq A\). Wollen wir zeigen, dass für alle \(x\in A'\) \texttt{f x} definiert ist, muss sie folgende 3 Eigenschaften erfüllen:
+  \textsc{Abgeschlossenheit}
+  \begin{itemize}
+  \item Für alle \(x\in A':\) \texttt{f x} tätigt im Rumpf rekursive Aufrufe nur mit Parametern \(y\in A'\).
+  \end{itemize}
+  \textsc{Definiertheit}
+  \begin{itemize}
+  \item Für alle \(x\in A':\) Unter der Annahme dass alle rekursiven Aufrufe die von \texttt{f x} getätigt werden definiert sind, muss der Rumpf an sich definiert sein, d.h. wenn partielle Funktionen \(g\) mit Parameter(n) \(z\) aufgerufen werden dann gilt immer \(z\in dom(g)\)
+  \end{itemize}
+  \textsc{Abstiegsfunktion}
+  \begin{itemize}
+  \item Es gibt eine Funktion \(m:A'\to \mathbb{N}\): Für alle \(x\in A'\): wenn bei der Auswertung von \texttt{f x} \(f\) rekursiv mit Parameter(n) \(y\) aufgerufen wird gilt \(m(y)<m(x)\) bzw. \(m(y)\leq m(x)-1\)
+  \end{itemize}
+\end{frame}
+\end{document}
