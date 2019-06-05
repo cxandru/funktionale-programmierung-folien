@@ -8,7 +8,7 @@
 \usepackage{forest}
 \title{Definiertheit rekursiver Funktionen}
 \author{Gregor Alexandru}
-\DefineVerbatimEnvironment{Verbatim}{Verbatim}{fontsize=\small}
+\DefineVerbatimEnvironment{Verbatim}{Verbatim}{formatcom=\color{orange}, fontsize=\small}
 \AtBeginSection[]
 {
   \begin{frame}<beamer>{Gliederung}
@@ -45,7 +45,7 @@
 f x = f x
 \end{Verbatim}
       \texttt{f 1} -- der Funktionsaufruf terminiert nicht.
-%    \item \texttt{(\x -> x x) (\x-> x x))} --terminiert nicht
+%    \item \texttt{(\x -> x x) (\x-> x x)} --terminiert nicht
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -72,16 +72,129 @@ f x = f x
     Der Ausdruck (1)=\texttt{f a}, \texttt{a} beliebig, ist definiert genau dann, wenn seine Auswertung terminiert, also der Ausdruck zu dem er auswertet, also (2)=\texttt{f a}, definiert ist, also seine Auswertung terminiert, also der Ausdruck zu dem er auswertet, also (3)=\texttt{f a}, wohdefiniert ist,...
   \end{itemize}
 \end{frame}
+
 \begin{frame}
   \frametitle{\textsc{Definiertheit I}}
   \begin{itemize}
   \item Wir können uns erstmal abhelfen indem wir fordern dass, angenommen dass die rekursiven Aufrufe von \(f\) im Rumpf definiert sind, der Aufruf selbst auch definiert ist.
-  \item Konkret heisst das dass mögliche partielle Funktionen die im Rumpf aufgerufen werden nur mit solchen Werten aufgerufen werden, für die sie definiert sind.
+  \item Konkret heisst das dass mögliche partielle Funktionen\footnote{oder Konstrukte, die man als partielle Funktionen interpretieren kann. Erklärung folgt.} die im Rumpf aufgerufen werden nur mit solchen Werten aufgerufen werden, für die sie definiert sind.
   \item Damit schließen wir Funktionen wie \texttt{f x = f x `div` 0} von Vornherein schon aus.
-  \item Wir betrachten die Werte der rekursiven Aufrufe also als black box und schauen ob der Ausdruck dann definiert ist\footnote{Über die \emph{Werte} der Aufrufe wissen wir ausser ihrer Definiertheit i.A. nichts, dafür müssten wir den Bildbereich der Funktion \(dom(f)\) finden oder Aussagen über die funktionale Abhängigkeit der Funktionswerte von ihrer Eingabe treffen, was den Ramen dieser Beobachtung sprengt.}.
-  \item \alt<2>{\texttt{f x = 1 `div` x - (blablii) + head [blub]}}{\texttt{f x = 1 `div` x - (f (x+1)) + head [f (x-2)]}}
   \end{itemize}
 \end{frame}
+\begin{frame}
+  \frametitle{Vorgehen \textsc{Definiertheit}}
+  \begin{itemize}
+  \item Wir betrachten die Werte der rekursiven Aufrufe also als black box und schauen ob der Ausdruck dann definiert ist.
+  \item \alt<2->{\texttt{f x = 1 `div` x - (blablii) + head [blub]}}{\texttt{f x = 1 `div` x - (f (x+1)) + head [f (x-2)]}}
+  \item<3-> Ausser ihrer Definiertheit wissen wir über die Werte nur, dass sie den Typ des Ziels der Funktion haben. Für granularere Differenzierung müssten wir den Bildbereich der Funktion (\(im(f)\)) finden oder Aussagen über die funktionale Abhängigkeit der Funktionswerte von ihren Eingaben treffen, was den Ramen dieser Beobachtung sprengt.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Anmerkung: partielle Konstrukte}
+  \begin{itemize}
+  \item \texttt{case}- und \texttt{let}- Expressions kann man auch als gleichzeitige Definition und Applikation anonymer Funktionen (also Lambda-Ausdrücken) auffassen. Wie genau das funktioniert sehen wir auf den nächsten Folien. Insbesondere können diese Funktionen auch partiell sein. z.B.
+  \item
+    \arraycolsep=0em
+    \begin{tabular}{ccccc}
+    \begin{minipage}{3cm}
+\begin{Verbatim}
+let (x:xs) = ys 
+in x
+\end{Verbatim}
+    \end{minipage}&
+    \(\simeq\)&
+    \begin{minipage}{1.5cm}
+\begin{Verbatim}
+head ys
+\end{Verbatim}
+    \end{minipage}&
+      \(\simeq\)&
+    \begin{minipage}{3cm}
+\begin{Verbatim}
+case ys of 
+  x:xs -> x
+\end{Verbatim}
+    \end{minipage}
+    \end{tabular}
+
+  \item Diese Ausdrücke sind äquivalent -- um die \textsc{Definiertheit} zu zeigen müssen wir also in jedem Fall zeigen, dass \texttt{ys} nie die leere Liste sein kann, wenn der jeweilige Ausdruck ausgewertet wird.
+  \end{itemize}
+\end{frame}
+\begin{frame}[fragile]
+  \frametitle{\texttt{let} als Def \& App eines \(\lambda\)-Ausdrucks}
+  \begin{itemize}
+  \item
+    \begin{minipage}{.3\linewidth}
+\begin{Verbatim}
+let x = bar 
+    y = foo
+in buz x y
+\end{Verbatim}
+    \end{minipage}
+    \(\simeq\)
+    \begin{minipage}{.4\linewidth}
+\begin{Verbatim} 
+(\x -> \y -> buz x y) bar foo
+\end{Verbatim}
+    \end{minipage}
+  \item Die Expansion geht nicht immer, da let rekursiv ist, d.h. etwas wie z.B.
+    \begin{minipage}{.3\linewidth}
+\begin{Verbatim}
+let x = 3:x
+in x
+\end{Verbatim}
+    \end{minipage}
+    \(\simeq\)
+    \begin{minipage}{.2\linewidth}
+\begin{Verbatim}
+      repeat 3
+\end{Verbatim}
+    \end{minipage}
+    \\
+    können wir auf die Weise nicht umschreiben. Die meisten \texttt{let}-Ausdrücke jedoch die uns begegnen werden sind nicht rekursiv.
+  \end{itemize}
+\end{frame}
+\begin{frame}[fragile]
+  \frametitle{\texttt{case} als Def \& App eines \(\lambda\)-Ausdrucks}
+  \begin{itemize}
+  \item
+    \begin{minipage}{.4\linewidth}
+\begin{Verbatim}
+case reverse xs of 
+  [] -> foo
+  y:ys -> bar
+\end{Verbatim}
+    \end{minipage}
+    \(\simeq\)
+    \begin{minipage}{.4\linewidth}
+\begin{Verbatim}
+(\ys -> 
+  case ys of 
+    [] -> foo
+    y:ys -> bar
+) (reverse xs)
+\end{Verbatim}
+    \end{minipage}
+  \item Erinnerung: \enquote{äußere} Pattern-Unterscheidungen kann man mit einem \texttt{case}-Ausdruck immer \enquote{nach innen ziehen}. z.B.:
+  \item
+    \begin{minipage}{.4\linewidth}
+\begin{Verbatim}
+foo (x:xs) = bar
+foo [] = buz
+\end{Verbatim}
+    \end{minipage}
+    \(\simeq\)
+    \begin{minipage}{.4\linewidth}
+\begin{Verbatim}
+foo = (\ys -> case ys of 
+                x:xs -> bar
+                [] -> buz)
+\end{Verbatim}
+    \end{minipage}
+  \end{itemize}
+\end{frame}
+
 \begin{frame}[fragile]
   \frametitle{Partielle Terminierung}
   \begin{itemize}
@@ -91,7 +204,7 @@ f x = f x
 fak 0 = 1
 fax x = x * fak (x-1)
 \end{Verbatim}
-  \item terminiert nur für \(x\in \mathbb{N}\subseteq \mathbb{Z}\)
+    terminiert nur für \(x\in \mathbb{N}\subseteq \mathbb{Z}\)
   \item Wir wollen also ggf. nur die partielle Definiertheit (und damit insb. Terminierung) einer Funktion zeigen, also dass \texttt{f x} definiert ist für Werte \(x\in A'\), wobei \(A'\) Teilmenge des Ursprungs ist.
   \end{itemize}
 \end{frame}
@@ -100,8 +213,8 @@ fax x = x * fak (x-1)
   \item Wollen wir zeigen, dass \texttt{f x} definiert ist, müssen wir erst seine \textsc{Definiertheit} zeigen.
   \item Dafür mussten wir zeigen dass der Rumpf von \texttt{f x} definiert ist, unter der Vorraussetzung, dass alle rekursiven Aufrufe im Rumpf definiert sind.
   \item Unser Ziel ist jetzt aber nur, für Werte  \(x\in A'\) die Definiertheit von \texttt{f x} zu zeigen!
-\item D.h. wir dürfen die Definiertheit der rekursiven Aufrufe nur dann annehmen, wenn diese wieder mit Parametern \(y\in A'\) getätigt werden!
-\item Diese Beobachtung führt uns zur Formulierung der nächsten Eigenschaft, und danach der Umformulierung der \textsc{Definiertheit}.
+  \item D.h. wir dürfen die Definiertheit der rekursiven Aufrufe nur dann annehmen, wenn diese wieder mit Parametern \(y\in A'\) getätigt werden!
+  \item Diese Beobachtung führt uns zur Formulierung der nächsten Eigenschaft, und danach der Umformulierung der \textsc{Definiertheit}.
   \end{itemize}
 \end{frame}
 \begin{frame}
